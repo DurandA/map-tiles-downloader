@@ -74,12 +74,23 @@ class Crawler:
     def replace_path_tile(self, path: str, tile: Tile):
         return path.format(x=tile.x, y=tile.y, z=tile.z)
 
-    async def crawl_box(self, session, bounding_box: Tuple[Tile, Tile], url: str, folder, num_workers: int):
-        queue = asyncio.Queue()
-
+    def tiles_generator(self, bounding_box: Tuple[Tile, Tile]):
         for x in range(bounding_box[0].x, bounding_box[1].x + 1):
             for y in range(bounding_box[0].y, bounding_box[1].y + 1):
-                tile = Tile(x=x, y=y, z=bounding_box[0].z)
+                yield Tile(x=x, y=y, z=bounding_box[0].z)
+
+    async def crawl_box(self, session, bounding_box: Tuple[Tile, Tile], url: str, folder, num_workers: int):
+        queue = asyncio.Queue(maxsize=num_workers*2)
+
+        tiles_count = (bounding_box[1].x - bounding_box[0].x + 1) * (bounding_box[1].y - bounding_box[0].y + 1)
+
+        progress = tqdm_asyncio(total=tiles_count, desc="Downloading tiles")
+        with logging_redirect_tqdm(tqdm_class=tqdm_asyncio):
+
+            # start worker coroutines
+            workers = [asyncio.create_task(worker(queue, progress)) for _ in range(num_workers)]
+
+            for tile in self.tiles_generator(bounding_box):
                 source = self.replace_path_tile(url, tile)
                 parsed_url = urlparse(url)
                 path = Path(parsed_url.path)
@@ -87,12 +98,6 @@ class Crawler:
 
                 await queue.put(self.download_tile(session, source, target))
 
-        progress = tqdm_asyncio(total=queue.qsize(), desc="Downloading tiles")
-
-        with logging_redirect_tqdm(tqdm_class=tqdm_asyncio):
-            # start worker coroutines
-            workers = [asyncio.create_task(worker(queue, progress)) for _ in range(num_workers)]
-            
             # wait for all tasks to be completed
             await queue.join()
 
