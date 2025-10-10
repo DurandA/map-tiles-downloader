@@ -1,6 +1,34 @@
 # map-tiles-downloader
 
-Crawl map tiles from a specified URL and store them locally.
+Download map tiles from any tile server for a specific bounding box (geographic area).
+
+## Quick Start
+
+**With uv (dependencies installed automatically):**
+```bash
+uv run crawler.py \
+  --top-latitude 47.5 \
+  --top-longitude 7.5 \
+  --bottom-latitude 47.0 \
+  --bottom-longitude 8.0 \
+  --level 12 \
+  --url "https://tile.openstreetmap.org/{z}/{x}/{y}.png" \
+  --target-folder ./tiles
+```
+
+**Without uv:**
+```bash
+pip install aiohttp aiofiles tqdm
+
+python crawler.py \
+  --top-latitude 47.5 \
+  --top-longitude 7.5 \
+  --bottom-latitude 47.0 \
+  --bottom-longitude 8.0 \
+  --level 12 \
+  --url "https://tile.openstreetmap.org/{z}/{x}/{y}.png" \
+  --target-folder ./tiles
+```
 
 ## Usage
 

@@ -1,3 +1,14 @@
+#!/usr/bin/env uv run
+#
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#   "aiohttp",
+#   "aiofiles",
+#   "tqdm",
+# ]
+# ///
+
 import argparse
 import asyncio
 import logging
